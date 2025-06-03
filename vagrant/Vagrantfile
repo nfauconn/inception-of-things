@@ -1,0 +1,27 @@
+Vagrant.configure("2") do |config|
+  VM_BOX = "debian/bookworm64"
+  VM_MEMORY = 512
+  VM_CPU = 1
+
+  MACHINES = [
+    { name: "nfauconnS",   ip: "192.168.56.110" }, # Machine Server
+    { name: "nfauconnSW",  ip: "192.168.56.111" }  # Machine ServerWorker
+  ]
+
+  MACHINES.each do |machine|
+    config.vm.define machine[:name] do |vm_config|
+      vm_config.vm.box = VM_BOX
+      vm_config.vm.hostname = machine[:name]
+      vm_config.vm.network "private_network", ip: machine[:ip]
+
+      vm_config.vm.provider "virtualbox" do |vb|
+        vb.memory = VM_MEMORY
+        vb.cpus  = VM_CPU
+      end
+
+      # SSH sans mot de passe (clé gérée automatiquement par Vagrant)
+      # Aucune modif nécessaire ici : vagrant up/vagrant ssh fonctionneront sans mot de passe
+    end
+  end
+end
+
