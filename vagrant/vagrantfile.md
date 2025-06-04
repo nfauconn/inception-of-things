@@ -35,4 +35,31 @@ Ordre:
 Par défaut, les nouveaux settings sont écrasent les autres.
 Si ce n'est pas le cas, comme pour les networks par exemple (qui sont ajoutés les uns aux autres), c'est spécifié dans la documentation.
 
-## Boxes
+# Notes
+
+Verifier qu'un Vagrantfile est opérationnel:
+```sh
+# Syntax
+vagrant validate
+# Build
+vagrant up
+# Status
+vagrant status
+# SSH
+vagrant ssh <machineName>
+```
+
+Verifier les reglages de la VM (ssh) :
+```sh
+# Verify hostname
+hostname
+# Verify IP
+ip a | grep 192.168.56.
+# CPU
+nproc
+# RAM
+free -m
+
+# OU juste (cf Vagrantfile):
+cat /tmp/vagrant-check.txt
+```
