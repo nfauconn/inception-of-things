@@ -18,22 +18,33 @@ Vagrant.configure("2") do |config|
         vb.memory = VM_MEMORY
         vb.cpus  = VM_CPU
       end
+
       vm_config.vm.provision "shell", inline: <<-SHELL
-        set -e
+        set -eux
 
         echo "Hostname: $(hostname)" > /tmp/vagrant-check.txt
         echo "IP: $(hostname -I)" >> /tmp/vagrant-check.txt
         echo "CPU: $(nproc)" >> /tmp/vagrant-check.txt
         echo "RAM: $(free -m | grep Mem | awk '{print $2}')" >> /tmp/vagrant-check.txt
 
-        sudo apt update
-        sudo apt install -y curl
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
-        echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-        kubectl version --client
+        sudo apt-get update
+        sudo apt-get install -y curl
       SHELL
+
+      if machine[:name] == "server"
+        vm_config.vm.provision "shell", inline: <<-SHELL
+        set -eux
+        curl -sfL https://get.k3s.io | sh -
+        sudo cp /var/lib/rancher/k3s/server/node-token /vagrant/node-token
+        SHELL
+      else
+        vm_config.vm.provision "shell", inline: <<-SHELL
+        while [ ! -f /vagrant/node-token ]; do sleep 1; done
+        TOKEN=$(cat /vagrant/node-token)
+        curl -sfL https://get.k3s.io | K3S_URL=https://192.168.56.110:6443 K3S_TOKEN=$TOKEN sh -
+        SHELL
+      end
+
     end
   end
 end
