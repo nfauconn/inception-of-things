@@ -1,12 +1,12 @@
 Vagrant.configure("2") do |config|
   VM_BOX = "debian/bookworm64"
-  VM_MEMORY = 512
+  VM_MEMORY = 1024
   VM_CPU = 1
 
   # /!\ change machine names to stud logins
   MACHINES = [
-    { name: "server", hostname: "nfauconnS",   ip: "192.168.56.110" },
-    { name: "serverWorker", hostname: "nfauconnSW",  ip: "192.168.56.111" }
+    { name: "nfauconnS",  hostname: "nfauconnS",   ip: "192.168.56.110" },
+    { name: "nfauconnSW", hostname: "nfauconnSW",  ip: "192.168.56.111" }
   ]
 
   MACHINES.each do |machine|
@@ -15,23 +15,18 @@ Vagrant.configure("2") do |config|
       vm_config.vm.hostname = machine[:hostname]
       vm_config.vm.network "private_network", ip: machine[:ip]
       vm_config.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", machine[:name]]
         vb.memory = VM_MEMORY
         vb.cpus  = VM_CPU
       end
 
       vm_config.vm.provision "shell", inline: <<-SHELL
         set -eux
-
-        echo "Hostname: $(hostname)" > /tmp/vagrant-check.txt
-        echo "IP: $(hostname -I)" >> /tmp/vagrant-check.txt
-        echo "CPU: $(nproc)" >> /tmp/vagrant-check.txt
-        echo "RAM: $(free -m | grep Mem | awk '{print $2}')" >> /tmp/vagrant-check.txt
-
         sudo apt-get update
         sudo apt-get install -y curl
       SHELL
 
-      if machine[:name] == "server"
+      if machine[:name] == "nfauconnS"
         vm_config.vm.provision "shell", inline: <<-SHELL
         set -eux
         curl -sfL https://get.k3s.io | sh -
@@ -39,7 +34,7 @@ Vagrant.configure("2") do |config|
         SHELL
       else
         vm_config.vm.provision "shell", inline: <<-SHELL
-        while [ ! -f /vagrant/node-token ]; do sleep 1; done
+        set -eux
         TOKEN=$(cat /vagrant/node-token)
         curl -sfL https://get.k3s.io | K3S_URL=https://192.168.56.110:6443 K3S_TOKEN=$TOKEN sh -
         SHELL
